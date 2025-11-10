@@ -23,9 +23,93 @@ async function run() {
     // mongo db setup
     const db = client.db("tradeflow-db");
     const cardCollection = db.collection("cards");
+    const importCollection = db.collection("import");
+
+    // bbbbbbbbbbbbbbbbbbbbb
+    // app.post("/cards/:id/import", async (req, res) => {
+    //   try {
+    //     const { id } = req.params;
+    //     const qty = parseInt(req.body.qty, 10);
+
+    //     if (!ObjectId.isValid(id) || !qty || qty <= 0)
+    //       return res
+    //         .status(400)
+    //         .send({ success: false, message: "Invalid input" });
+
+    //     const result = await cardCollection.findOneAndUpdate(
+    //       { _id: new ObjectId(id), quantity: { $gte: qty } },
+    //       { $inc: { quantity: -qty } },
+    //       { returnDocument: "after" }
+    //     );
+
+    //     const updated = result?.value || result;
+    //     if (!updated)
+    //       return res
+    //         .status(400)
+    //         .send({ success: false, message: "Not enough quantity" });
+    //     console.log(updated);
+    //     res.send({ success: true, card: updated });
+    //   } catch (err) {
+    //     res.status(500).send({ success: false, message: "Server error" });
+    //   }
+    // });
+
+    // ddddddddddddddddddddddd
+
+    app.post("/cards/:id/import", async (req, res) => {
+      try {
+        const { id } = req.params;
+        const qty = parseInt(req.body.qty, 10);
+
+        if (!ObjectId.isValid(id) || !qty || qty <= 0) {
+          return res
+            .status(400)
+            .send({ success: false, message: "Invalid input" });
+        }
+
+        // Step 1: Quantity কমাও
+        const result = await cardCollection.findOneAndUpdate(
+          { _id: new ObjectId(id), quantity: { $gte: qty } },
+          { $inc: { quantity: -qty } },
+          { returnDocument: "after" }
+        );
+
+        const updated = result?.value || result;
+        if (!updated) {
+          return res
+            .status(400)
+            .send({ success: false, message: "Not enough quantity" });
+        }
+
+        // Step 2: Import collection এ insert করো
+        const importRecord = {
+          cardId: new ObjectId(id),
+          qty,
+          date: new Date(),
+          image: updated.image,
+          cardName: updated.name, // চাইলে কার্ডের নামও রাখতে পারো
+          remainingQty: updated.quantity, // এখনকার অবশিষ্ট সংখ্যা
+        };
+
+        await importCollection.insertOne(importRecord);
+
+        // Step 3: Response পাঠাও
+        res.send({ success: true, card: updated, importRecord });
+      } catch (err) {
+        console.error(err);
+        res.status(500).send({ success: false, message: "Server error" });
+      }
+    });
+    //
+
+    app.get("/import-card", async (req, res) => {
+      const result = await importCollection.find().toArray();
+      res.send(result);
+    });
     // get
     // find
     // findOne()
+    //
     app.get("/cards", async (req, res) => {
       const result = await cardCollection.find().toArray();
       res.send(result);
