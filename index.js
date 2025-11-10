@@ -45,7 +45,7 @@ async function run() {
     // details
     app.get("/cards/:id", async (req, res) => {
       const { id } = req.params;
-      console.log(id);
+      // console.log(id);
       const result = await cardCollection.findOne({ _id: new ObjectId(id) });
       res.send({
         success: true,
