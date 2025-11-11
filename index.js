@@ -125,6 +125,16 @@ async function run() {
         result,
       });
     });
+    // get email ar jonno
+    app.get("/my-export", async (req, res) => {
+      const email = req.query.email;
+      const result = await cardCollection
+        .find({
+          created_by: email,
+        })
+        .toArray();
+      res.send(result);
+    });
     // details
     app.get("/cards/:id", async (req, res) => {
       const { id } = req.params;
