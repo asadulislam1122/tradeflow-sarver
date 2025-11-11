@@ -156,6 +156,29 @@ async function run() {
         result,
       });
     });
+    // update
+    app.patch("/cards/:id", async (req, res) => {
+      const id = req.params.id;
+      const updateCards = req.body;
+      const query = { _id: new ObjectId(id) };
+      const update = {
+        $set: updateCards,
+        // $set: {
+        //   name: updateCards.name,
+        //   price: updateCards.price,
+        // },
+      };
+      const result = await cardCollection.updateOne(query, update);
+      res.send(result);
+    });
+    // delete
+    app.delete("/cards/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await cardCollection.deleteOne(query);
+      res.send(result);
+    });
+    //
     await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
