@@ -8,9 +8,6 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 app.use(cors());
 app.use(express.json());
 
-// const uri =
-//   "mongodb+srv://tradeflow-db:Ovjt6ijvwKBwVyR9@cluster-first-server-ap.bcgcgzv.mongodb.net/?appName=Cluster-first-server-app";
-
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster-first-server-ap.bcgcgzv.mongodb.net/?appName=Cluster-first-server-app`;
 
 const client = new MongoClient(uri, {
@@ -23,7 +20,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
     // mongo db setup
     const db = client.db("tradeflow-db");
     const cardCollection = db.collection("cards");
@@ -85,9 +82,7 @@ async function run() {
       const { id } = req.params;
 
       if (!ObjectId.isValid(id)) {
-        return res
-          .status(400)
-          .json({ success: false, message: "ভুল ID ফরম্যাট" });
+        return res.status(400).json({ success: false, message: "no data" });
       }
 
       try {
@@ -96,9 +91,7 @@ async function run() {
         });
 
         if (result.deletedCount === 0) {
-          return res
-            .status(404)
-            .json({ success: false, message: "ডেটা পাওয়া যায়নি" });
+          return res.status(404).json({ success: false, message: "no data" });
         }
 
         return res.json({ success: true, deletedId: id });
@@ -182,8 +175,16 @@ async function run() {
       const result = await cardCollection.deleteOne(query);
       res.send(result);
     });
+    // search
+    app.get("/search", async (req, res) => {
+      const search = req.query.search;
+      const result = await cardCollection
+        .find({ name: { $regex: search, $options: "i" } })
+        .toArray();
+      res.send(result);
+    });
     //
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
