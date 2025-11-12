@@ -1,13 +1,17 @@
 const express = require("express");
 const cors = require("cors");
+require("dotenv").config();
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+// console.log(process.env);
 app.use(cors());
 app.use(express.json());
 
-const uri =
-  "mongodb+srv://tradeflow-db:Ovjt6ijvwKBwVyR9@cluster-first-server-ap.bcgcgzv.mongodb.net/?appName=Cluster-first-server-app";
+// const uri =
+//   "mongodb+srv://tradeflow-db:Ovjt6ijvwKBwVyR9@cluster-first-server-ap.bcgcgzv.mongodb.net/?appName=Cluster-first-server-app";
+
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster-first-server-ap.bcgcgzv.mongodb.net/?appName=Cluster-first-server-app`;
 
 const client = new MongoClient(uri, {
   serverApi: {
