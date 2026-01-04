@@ -25,9 +25,51 @@ async function run() {
     const db = client.db("tradeflow-db");
     const cardCollection = db.collection("cards");
     const importCollection = db.collection("import");
-
+    const contactCollection = db.collection("contacts");
+    const userCollection = db.collection("users");
     // ddddddddddddddddddddddd
+    // user related api
+    app.get("/users", async (req, res) => {
+      const cursor = userCollection.find().sort({ createdAt: -1 });
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+    //
+    // Change role
+    app.patch("/users/:id", async (req, res) => {
+      const { id } = req.params;
+      const updateRole = req.body; // { role: "admin" }
 
+      const result = await userCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: updateRole }
+      );
+
+      res.send(result);
+    });
+    // role
+    app.get("/users/:email/role", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const user = await userCollection.findOne(query);
+      res.send({ role: user?.role || "user" });
+    });
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+
+      const existing = await userCollection.findOne({ email: user.email });
+      if (existing) {
+        return res.send({ message: "User already exists" });
+      }
+
+      user.role = "user";
+      user.createdAt = new Date();
+
+      const result = await userCollection.insertOne(user);
+      res.send(result);
+    });
+
+    //
     app.post("/cards/:id/import", async (req, res) => {
       try {
         const { id } = req.params;
@@ -72,7 +114,7 @@ async function run() {
     //
 
     app.get("/import-card", async (req, res) => {
-      const result = await importCollection.find().toArray();
+      const result = await importCollection.find().sort({ date: -1 }).toArray();
       res.send(result);
     });
     //
@@ -107,7 +149,10 @@ async function run() {
     // findOne()
     //
     app.get("/cards", async (req, res) => {
-      const result = await cardCollection.find().toArray();
+      const result = await cardCollection
+        .find()
+        .sort({ createdAT: -1 })
+        .toArray();
       res.send(result);
     });
     // home get
@@ -128,6 +173,9 @@ async function run() {
       const result = await cardCollection
         .find({
           created_by: email,
+        })
+        .sort({
+          createdAT: -1,
         })
         .toArray();
       res.send(result);
@@ -183,6 +231,37 @@ async function run() {
         .toArray();
       res.send(result);
     });
+    // contact
+    app.post("/contact", async (req, res) => {
+      try {
+        const { name, email, message } = req.body;
+
+        if (!name || !email || !message) {
+          return res
+            .status(400)
+            .send({ success: false, message: "All fields required" });
+        }
+
+        const contactInfo = {
+          name,
+          email,
+          message,
+          createdAt: new Date(),
+        };
+
+        const result = await contactCollection.insertOne(contactInfo);
+
+        res.send({
+          success: true,
+          message: "Message sent successfully",
+          insertedId: result.insertedId,
+        });
+      } catch (err) {
+        console.error("Contact Error:", err);
+        res.status(500).send({ success: false, message: "Server error" });
+      }
+    });
+
     //
     // await client.db("admin").command({ ping: 1 });
     console.log(
