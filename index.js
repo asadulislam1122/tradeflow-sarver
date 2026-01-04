@@ -232,6 +232,12 @@ async function run() {
       res.send(result);
     });
     // contact
+    app.get("/contact", async (req, res) => {
+      const cursor = contactCollection.find().sort({ createdAt: -1 });
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+    // contact post api
     app.post("/contact", async (req, res) => {
       try {
         const { name, email, message } = req.body;
